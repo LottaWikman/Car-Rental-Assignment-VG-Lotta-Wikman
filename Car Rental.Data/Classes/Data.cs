@@ -13,6 +13,10 @@ public class Data : IData
     readonly List<IPerson> _persons = new();
     readonly List<IBooking> _bookings = new();
 
+    //public int NextVehicleId => _vehicles.Count.Equals(0) ? 1 : _vehicles.Max(i => i.Id) + 1;
+    //public int NextPersonId => _persons.Count.Equals(0) ? 1 : _persons.Max(i => i.Id) + 1;
+    public int NextBookingId => _bookings.Count.Equals(0) ? 1 : _bookings.Max(i => i.Id) + 1;
+
     public Data()
     {
         _vehicles.Add(new Car("ABC123", "Subaru", 100_000, 2, VehicleTypes.Combi, 100, true));
@@ -25,10 +29,10 @@ public class Data : IData
         _persons.Add(new Customer(444444, "Sigridsdotter", "Sigrid"));
         _persons.Add(new Customer(999999, "Eriksson", "Erik"));
 
-        _bookings.Add(new Booking(_vehicles[2], _persons[1], 60500, DateTime.Now.AddDays(-7).Date, DateTime.Now, 300, true));
-        _bookings.Add(new Booking(_vehicles[3], _persons[0], 60050, DateTime.Now.AddDays(-16).Date, DateTime.Now.AddDays(-14), 200, true));
-        _bookings.Add(new Booking(_vehicles[1], _persons[2], null, DateTime.Now.AddDays(-2), null, null, false));
-        _bookings.Add(new Booking(_vehicles[4], _persons[1], null, DateTime.Now.AddDays(-1).Date, null, null, false));
+        _bookings.Add(new Booking(NextBookingId, _vehicles[2], _persons[1], 60500, DateTime.Now.AddDays(-7).Date, DateTime.Now, 300, true));
+        _bookings.Add(new Booking(NextBookingId, _vehicles[3], _persons[0], 60050, DateTime.Now.AddDays(-16).Date, DateTime.Now.AddDays(-14), 200, true));
+        _bookings.Add(new Booking(NextBookingId, _vehicles[1], _persons[2], null, DateTime.Now.AddDays(-2), null, null, false));
+        _bookings.Add(new Booking(NextBookingId, _vehicles[4], _persons[1], null, DateTime.Now.AddDays(-1).Date, null, null, false));
     }
 
     
@@ -47,21 +51,17 @@ public class Data : IData
             if (expression is null) return collection.ToList();
 
             return collection.Where(expression).ToList();
-            //mycket av det här går att använda även i Add-metoden och single-metoden
         }
         catch
         {
             throw;
         }
-
     }
-
 
     T? IData.Single<T>(Expression<Func<T, bool>> expression) where T : default
     {
         try
         {
-        //collection är en variabel, inte en lista!
             var collections = GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(f => f.FieldType == typeof(List<T>) && f.IsInitOnly)
                 ?? throw new InvalidOperationException("Unsupported type");
@@ -76,23 +76,15 @@ public class Data : IData
     
     }
 
-
-
-    public void GenericAdd<T>(T item) where T : class // där T är det aktuella objektet<T>
+    public void GenericAdd<T>(T item) where T : class
     {
         try
         {
-            //reflections:
             var collections = GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(f => f.FieldType == typeof(List<T>) && f.IsInitOnly)
                 ?? throw new InvalidOperationException("Unsupported type");
-            //hitta rätt collection-property i klassen (allt ovanför)
-
-            //arbetar med datat i listan som hämtats:
             var value = collections.GetValue(this) ?? throw new InvalidDataException();
-            ((List<T>)value).Add(item); //vi castar om value-variabeln av typen object
-                                        //till en lista<T> för att Add-metoden ska fungera,
-                                        //sen skickar vi in item i Add-funktionen
+            ((List<T>)value).Add(item);
         }
         catch
         {
@@ -102,13 +94,7 @@ public class Data : IData
 
     public void AddBooking(Booking booking)
     {
+
         _bookings.Add(booking);
     }
-
-
-    public void EndBooking(Booking booking) 
-    {
-
-    }
-
 }

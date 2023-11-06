@@ -9,5 +9,7 @@ public interface IData
     public void GenericAdd<T>(T item) where T : class;
     T? Single<T>(Expression<Func<T, bool>>? expression);
     public void AddBooking(Booking booking);
+    public int NextBookingId { get; }
+
 
 }

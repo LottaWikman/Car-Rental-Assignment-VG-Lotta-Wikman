@@ -1,18 +1,18 @@
 ﻿using Car_Rental.Common.Classes;
+using Car_Rental.Common.Extensions;
 using Car_Rental.Common.Interfaces;
 namespace Car_Rental.Business.Classes;
 
 
 public class BookingProcessor
 {
-
-    private readonly IData _data; //konstruktor-injektion, en typ av inject när man har jobbar i klassbibliotek
+    private readonly IData _data;
     private readonly InputValues _inputValues;
 
     public BookingProcessor(IData data, InputValues inputValues)
     {
         _data = data;
-        _inputValues = inputValues; //skapar object av typerna data och inputvalues
+        _inputValues = inputValues;
     }
 
     public string error = string.Empty;
@@ -20,7 +20,6 @@ public class BookingProcessor
     public bool isDisabled = false;
     
 
-    //GET-metoder:
     public List<Vehicle> GetVehiclesGeneric()
     {
         return _data.Get<Vehicle>(null);
@@ -36,24 +35,46 @@ public class BookingProcessor
         return _data.Get<IBooking>(null);
     }
 
-    //GetSingle-metoder
 
-
-
-    //ADD-metoder:
     public void AddVehicle()
     {
         error = string.Empty;
-        _data.GenericAdd(_inputValues.Vehicle);
-        _inputValues.ClearVehicle();
+
+        if (_inputValues.Vehicle.RegNo != string.Empty && 
+            _inputValues.Vehicle.Make != string.Empty && 
+            _inputValues.Vehicle.Odometer != default && 
+            _inputValues.Vehicle.PricePerKm != default &&
+            _inputValues.Vehicle.PricePerDay != default)
+        {
+            _data.GenericAdd(_inputValues.Vehicle);
+            _inputValues.ClearVehicle();
+        }
+        else
+        {
+            error = "Must have all information about the vehicle.";
+        }
+
+
     }
+
     public void AddPerson()
     {
         error = string.Empty;
-        _data.GenericAdd(_inputValues.Customer);
-        _inputValues.ClearCustomer();
-    }
 
+
+        if (_inputValues.Customer.SSN != default && 
+            _inputValues.Customer.LastName != string.Empty && 
+            _inputValues.Customer.FirstName != string.Empty)
+        {
+            _data.GenericAdd(_inputValues.Customer);
+            _inputValues.ClearCustomer();
+        }
+        else
+        {
+            error = "Must have all information about the customer.";
+        }
+
+    }
 
     public async Task RentVehicle(Vehicle vehicle, int SSN)
     {
@@ -66,7 +87,7 @@ public class BookingProcessor
             error = string.Empty;
             var customer = _data.Single<IPerson>(p => p.SSN == SSN);
 
-            Booking newBooking = new(vehicle, customer, null, DateTime.Now, null, null, false);
+            Booking newBooking = new(_data.NextBookingId, vehicle, customer, null, DateTime.Now, null, null, false);
             _inputValues.Vehicle.Status = false;
             _data.AddBooking(newBooking);
 
@@ -75,36 +96,31 @@ public class BookingProcessor
             loading = string.Empty;
             isDisabled = false;
         }
-        catch
+        catch (Exception ex)
         {
             error = "Couldn't find a customer.";
             isDisabled = false;
             loading = string.Empty;
-            //await Task.Delay(5000);
-            //error = string.Empty;
         }
     }
 
-    public async void ReturnVehicle(Vehicle vehicle, int distance)
+    public void ReturnVehicle(IVehicle vehicle, int distance)
     {
         //måste hitta bokningen:
         try
         {
             error = string.Empty;
-            var booking = _data.Single<IBooking>(b => b.Vehicle.RegNo == vehicle.RegNo && vehicle.Status == false); 
-            //letar efter en bokning som innehåller samma regnummer, och som måste var uthyrd
+            var booking = _data.Single<IBooking>(b => b.Vehicle.RegNo == vehicle.RegNo && b.Returned == false);
 
-            vehicle.Status = true; //fordonet blir tillgängligt igen
-            booking.Returned = true; //bokningne är avslutad
+            vehicle.Status = true;
+            booking.Returned = true;
             booking.KmReturned = vehicle.Odometer + distance;
+            booking.DateReturned = DateTime.Now;            
 
-            booking.DateReturned = DateTime.Now;
-            
-            int daysRented = (DateTime.Now - booking.DateRented).Days +1;
+            int daysRented = VehicleExtensions.Duration(booking.DateRented);
             booking.Cost = distance * vehicle.PricePerKm + daysRented * vehicle.PricePerDay;
-
         }
-        catch
+        catch(Exception ex)
         {
             error = "Couldn't find a booking";
         }

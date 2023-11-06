@@ -2,9 +2,9 @@
 
 public interface IBooking
 {
+    public int Id { get; set; }
     public IVehicle Vehicle { get; set; }
-    public IPerson Customer { get; set; } 
-    //public int KmRented { get; set; }
+    public IPerson Customer { get; set; }
     public int? KmReturned { get; set; }
     public DateTime DateRented { get; set; }
     public DateTime? DateReturned { get; set; }
