@@ -1,5 +1,4 @@
 ﻿using Car_Rental.Common.Interfaces;
-using Car_Rental.Common.Classes;
 
 namespace Car_Rental.Common.Classes;
 
