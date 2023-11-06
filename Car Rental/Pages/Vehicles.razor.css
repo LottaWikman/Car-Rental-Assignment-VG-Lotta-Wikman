@@ -1,0 +1,27 @@
+﻿table .available {
+    background-color: #64942C;
+    color: white;
+    border-radius: 10px;
+}
+
+
+table .booked {
+    background-color: #CC3333;
+    color: white;
+    border-radius: 10px;
+}
+
+.button-margin-left {
+    margin-left: 10px;
+}
+
+select {
+    height: 37px !important;
+}
+
+.alert {
+    background-color: indianred;
+    color: white;
+    font-size: 15px;
+
+}

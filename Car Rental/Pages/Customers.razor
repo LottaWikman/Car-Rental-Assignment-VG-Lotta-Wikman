@@ -1,0 +1,27 @@
+﻿@page "/customers"
+@using Business.Classes;
+@inject BookingProcessor processor
+
+<h1>Customers</h1>
+<br />
+<table class="table table-bordered" style="width:500px">
+
+    <thead>
+        <tr>
+            <th>SSN</th>
+            <th>Last Name</th>
+            <th>First Name</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var customer in processor.GetPersonsGeneric())
+        {
+            <tr>
+                <td>@customer.SSN</td>
+                <td>@customer.LastName</td>
+                <td>@customer.FirstName</td>
+            </tr>   
+        }
+    </tbody>
+</table>

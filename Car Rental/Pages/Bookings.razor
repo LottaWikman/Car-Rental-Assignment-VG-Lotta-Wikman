@@ -1,0 +1,45 @@
+﻿@page "/bookings"
+@using Car_Rental.Business.Classes;
+@inject BookingProcessor processor
+
+<PageTitle>Bookings</PageTitle>
+
+<h1>Bookings</h1>
+
+<br />
+
+<table class="table table-bordered">
+
+    <thead>
+        <tr>
+            <th>RegNo</th>
+            <th>Customer</th>
+            <th>Km Rented</th>
+            <th>Km Returned</th>
+            <th>Rented</th>
+            <th>Returned</th>
+            <th>Cost</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var booking in processor.GetBookingsGeneric())
+        {
+            <tr>
+                <td>@booking.Vehicle.RegNo</td>
+                <td>(@booking.Customer.SSN) @booking.Customer.LastName, @booking.Customer.FirstName</td>
+                <td>@booking.Vehicle.Odometer</td>
+                <td>@booking.KmReturned</td>
+                <td>@booking.DateRented.ToShortDateString()</td>
+                <td>@booking.DateReturned?.ToShortDateString()</td>
+                <td>@booking.Cost</td>
+                <td>
+                    <center>
+                        <div class="@(booking.Vehicle.Status ? "available" : "booked")">@(booking.Vehicle.Status ? "Closed" : "Open")</div>
+                    </center>                    
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

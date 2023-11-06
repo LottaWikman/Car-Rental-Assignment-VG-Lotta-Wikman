@@ -1,0 +1,218 @@
+﻿@page "/"
+@using Business.Classes;
+@using Car_Rental.Common.Classes;
+@using Car_Rental.Common.Enums;
+@inject BookingProcessor processor
+@inject InputValues inputValues
+
+<PageTitle>Vehicles</PageTitle>
+
+@if (processor.error != string.Empty)
+{
+    <div class="alert">ERROR: @processor.error</div>
+}
+
+<h2>Vehicles</h2>
+
+<table class="table table-bordered">
+
+    <thead>
+        <tr>
+            <th>RegNo</th>
+            <th>Make</th>
+            <th>Odometer</th>
+            <th>$/km</th>
+            <th>Vehicle Type</th>
+            <th>$/day</th>
+            <th>Action</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        <tr>
+            <td>
+                <input class="form-control" size="4" placeholder="RegNo" disabled="@processor.isDisabled"
+                @bind="inputValues.Vehicle.RegNo"/>
+            </td>
+            <td>
+                <input class="form-control" size="10" placeholder="Make" disabled="@processor.isDisabled"
+                @bind="inputValues.Vehicle.Make"/>
+            </td>
+            <td>
+                <input class="form-control" size="10" placeholder="Odometer" disabled="@processor.isDisabled"
+                @bind="inputValues.Vehicle.Odometer"/>
+            </td>
+            <td>
+                <input class="form-control" size="5" placeholder="Price/km" disabled="@processor.isDisabled"
+                @bind="inputValues.Vehicle.PricePerKm"/>
+            </td>
+            <td>
+                <select class="form-select" @bind="@inputValues.Vehicle.VehicleType" disabled="@processor.isDisabled">
+                    @foreach (var vehicleType in Enum.GetNames(typeof(VehicleTypes)))
+                    {
+                        <option value="@Enum.Parse(typeof(VehicleTypes), vehicleType)">@vehicleType</option>
+                    }
+                </select>
+            </td>
+            <td>
+                <input class="form-control" size="5" placeholder="Price/day" disabled="@processor.isDisabled"
+                @bind="inputValues.Vehicle.PricePerDay"/>
+            </td>
+            <td>
+                <button size="10" class="btn btn-outline-success" disabled="@processor.isDisabled"
+                @onclick="() => processor.AddVehicle()">
+                Add Vehicle
+                </button>
+            </td>
+            <td>
+                @if (processor.loading == string.Empty)
+                {
+                    
+                }
+                    else
+                {
+                    <h5> 
+                        <span class="badge bg-warning">Processing...</span>
+                    </h5>
+                }
+            </td>
+        </tr>
+
+        @foreach (var vehicle in processor.GetVehiclesGeneric())
+        {
+            <tr>
+                <td>@vehicle.RegNo</td>
+                <td>@vehicle.Make</td>
+                <td>@vehicle.Odometer.ToString("#,##0")</td>
+                <td>@vehicle.PricePerKm</td>
+                <td>@vehicle.VehicleType</td>
+                <td>@vehicle.PricePerDay</td>
+                <td>
+                    @if (vehicle.Status == true)
+                    {
+                        <div class="btn-group">
+                            <select class="form-select" @bind="@inputValues.Customer.SSN" disabled="@processor.isDisabled">
+                                @*anropar den tomma kunden i inputVariables*@
+                            @foreach (var customer in processor.GetPersonsGeneric())
+                            {
+                                <option value="@customer.SSN">@customer.LastName @customer.FirstName</option> //spara SSN i en variabel, den som ligger i bind
+                            }
+                        </select>
+
+                            <button class="btn btn-outline-success" 
+                            @onclick="async ()=> { await processor.RentVehicle(vehicle, inputValues.Customer.SSN); 
+                                vehicle.Status = false; }" disabled="@processor.isDisabled">Rent</button>
+                        </div>
+                    }
+
+                    else
+                    {
+                        <div class="input-group">
+                            <input size="10" placeholder="Distance" disabled="@processor.isDisabled" @bind="inputValues.distance" />
+
+                            <button class="btn btn-outline-primary button-margin-left" disabled="@processor.isDisabled" @onclick="()=> processor.ReturnVehicle(vehicle, inputValues.distance)">Return</button>
+                        </div>
+                    }
+
+                </td>
+                <td>
+                    <center>
+                        <div class="@(vehicle.Status ? "available" : "booked")">@(vehicle.Status ? "Available" : "Booked")</div>
+                    </center>
+                </td>
+            </tr>
+        }
+    </tbody>
+
+</table>
+<br />
+
+<h2>Bookings</h2>
+
+<table class="table table-bordered">
+
+    <thead>
+        <tr>
+            <th>RegNo</th>
+            <th>Customer</th>
+            <th>Km Rented</th>
+            <th>Km Returned</th>
+            <th>Rented</th>
+            <th>Returned</th>
+            <th>Cost</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var booking in processor.GetBookingsGeneric())
+        {
+            <tr>
+                <td>@booking.Vehicle.RegNo</td>
+                <td>(@booking.Customer.SSN) @booking.Customer.LastName, @booking.Customer.FirstName</td>
+                <td>@booking.Vehicle.Odometer.ToString("#,##0")</td>
+                <td>@booking.KmReturned @*.ToString("#,##0")*@</td>
+                <td>@booking.DateRented.ToShortDateString()</td>
+                <td>@booking.DateReturned?.ToShortDateString()</td>
+                <td>@booking.Cost</td>
+                <td>
+                    <center>
+                        <div class="@(booking.Returned ? "available" : "booked")">@(booking.Returned ? "Closed" : "Open")</div>
+                    </center>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<br />
+
+<h2>Customers</h2>
+
+<table class="table table-bordered" style="width:500px">
+
+    <thead>
+        <tr>
+            <th>SSN</th>
+            <th>Last Name</th>
+            <th>First Name</th>
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr>
+            <td>
+                <input class="form-control" size="4" placeholder="SSN"
+                @bind="inputValues.Customer.SSN" />
+            </td>
+            <td>
+                <input class="form-control" size="6" placeholder="Last Name"
+                @bind="inputValues.Customer.LastName" />
+            </td>
+            <td>
+                <input class="form-control" size="6" placeholder="First Name"
+                @bind="inputValues.Customer.FirstName" />
+            </td>
+            <td>
+                <button class="btn btn-outline-success" 
+                @onclick="() => processor.AddPerson()">Add Customer</button>
+            </td>
+        </tr>
+
+        @foreach (var customer in processor.GetPersonsGeneric())
+        {
+            <tr>
+                <td>@customer.SSN</td>
+                <td>@customer.LastName</td>
+                <td>@customer.FirstName</td>
+                <td></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
